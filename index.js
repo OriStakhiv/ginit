@@ -19,3 +19,8 @@ console.log(
     figlet.textSync('Ginit', { horizontalLayout: 'full' })
   )
 );
+
+if (files.directoryExists('.git')){
+    console.log(chalk.red('Already a git repositoty.'))
+    process.exit();
+}
