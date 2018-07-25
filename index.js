@@ -25,7 +25,7 @@ if (files.directoryExists('.git')){
     process.exit();
 }
 
-function getGithubCredentials(callback){
+function getGithubCredentials(callback) {
     var questions = [
         {
             name: 'username',
@@ -52,11 +52,59 @@ function getGithubCredentials(callback){
 
                 }
                 else{
-                    return 'Enter your password: '
+                    return 'Enter your password: ';
                 }
 
-                }
             }
         }
-    ]
+    ];
+    inquirer.prompt(questions).then(callback);
+
 }
+
+getGithubCredentials(function(){
+    console.log(arguments);
+  });
+
+
+  github = new GitHubApi({
+    version: '3.0.0'
+  });
+
+  function getGithubToken(callback){
+      prefs = new Preferenses('ginit')
+      
+      if (prefs.github && prefs.github.token){
+          return callback(null, github.token)
+      }
+      getGithubCredentials(function(credentials){
+        status = new Spinner('Authenticating, please wait...')
+        status.start()
+
+        github.authenticate(
+            _.extend(
+                {
+                    type: 'basic',
+                },
+             credentials   
+            )
+        );
+
+        github.authorization.create({
+          scopes: ['user', 'public_repo', 'repo', 'repo:status'],
+          note: 'ginit, the command-line tool for initalizing Git repos'
+        }, function(err, res) {
+          status.stop();
+          if ( err ) {
+            return callback( err );
+          }
+          if (res.token) {
+            prefs.github = {
+              token : res.token
+            };
+            return callback(null, res.token);
+          }
+          return callback();
+        });
+      });
+    }
